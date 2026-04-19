@@ -1,50 +1,21 @@
-require ('dotenv').config();
-const express = require('express');
-const pgp = require('pg-promise')(/* opciones */);
-const app = express();
-app.use(express.json());
+import 'dotenv/config';
+import app from './app.js';
+import { prismaClient } from './utils/db.js';
 
-const port = 3000;
+const PORT = 3000;
 
-const db = pgp(`postgres://${process.env.POSTGRESQL_USER}:${process.env.POSTGRESQL_PASSWORD}@${process.env.POSTGRESQL_HOST}:${process.env.POSTGRESQL_PORT}/${process.env.POSTGRESQL_DATABASE}`);
+async function start() {
+    try{
+        await prismaClient.$connect();
+        console.log('Conexion a la base de datos establecida');
 
-app.get('/', (req, res) => {
-    res.send('Hola!');
-});
-
-/* Control de Usuarios */
-
-app.get('/users', async (req, res) => {
-    try {
-        const users = await db.any('SELECT * FROM users');
-        res.json(users);
+        app.listen(PORT, () => {
+            console.log(`Servidor escuchando en el puerto ${PORT}`);
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error al conectar a la base de datos:', error);
+        process.exit(1);
     }
-});
+}
 
-app.post('/users', async (req, res) => {
-    const { username, email, password_hash } = req.body;
-
-    try {
-        const newUser = await db.one('INSERT INTO users(username, email, password_hash) VALUES($1, $2, $3) RETURNING *', [username, email, password_hash]);
-        res.status(201).json(newUser);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/users/:id', async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        await db.none('DELETE FROM users WHERE id = $1', [id]);
-        res.status(200).json({ message: 'Usuario eliminado' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.listen(port, () => {
-    console.log(`Servidor escuchando en http://localhost:${port}`);
-});
+start();
