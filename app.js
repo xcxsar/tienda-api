@@ -8,6 +8,8 @@ import { config } from 'dotenv';
 
 // Rutas
 import authRoutes from './routes/auth.routes.js';
+import productRoutes from './routes/productos.routes.js';
+import ventasRoutes from './routes/ventas.routes.js';
 
 // Inicializar app
 const app = express();
