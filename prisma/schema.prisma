@@ -19,12 +19,34 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  sale     Sales[]
 }
 
 model Products {
-  id        Int      @id @default(autoincrement())
-  name      String
-  units     Int
-  price     Decimal @db.Decimal(10,2)
+  id            Int      @id @default(autoincrement())
+  name          String
+  units         Int
+  price         Decimal @db.Decimal(10,2)
+  salesDetails  salesDetail[]
+  urlImg        String
+}
+
+model Sales{
+  id              Int @id @default(autoincrement())
+  date            DateTime
+  totalPrice      Decimal @db.Decimal(10,2)
+  salesman        User @relation (fields: [salesmanId], references: [id])
+  salesmanId      Int
+  salesDetails    salesDetail[]
+}
+model salesDetail{
+  rowId        Int @id @default(autoincrement())
+  sale         Sales @relation(fields: [saleId], references: [id])
+  saleId       Int
+  product      Products @relation (fields: [productId], references: [id])
+  productId    Int
+  salesPrice   Decimal @db.Decimal(10,2)
+  quantity     Int
+  rowTotal     Decimal @db.Decimal(10,2)
 }
 
