@@ -9,11 +9,9 @@ import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
 import { isValid } from 'zod/v3';
 
 const router = Router();
-// Auth routes
-router.post('/login', validateSchema(loginSchema), login);
-router.post('/register', validateSchema(registerSchema), register);
-router.post('/logout', logout);
-router.get('/verify',verifyToken);
-router.get('/profile', authRequired, profile);
-
+router.post('/auth/login', validateSchema(loginSchema), login);
+router.post('/auth/register', validateSchema(registerSchema), register);
+router.post('/auth/logout', logout);
+router.get('/auth/verify',verifyToken);
+router.get('/auth/profile', authRequired, profile);
 export default router;
