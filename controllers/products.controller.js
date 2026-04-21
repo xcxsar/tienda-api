@@ -1,7 +1,5 @@
 import { prismaClient } from '../utils/db.js';
 import bcrypt from 'bcryptjs';
-import { createAccessToken } from '../libs/jwt.sign.js';
-import jwt from 'jsonwebtoken';
 
 export const insertProduct = async (req, res) => {
     const { name, price } = req.body;
