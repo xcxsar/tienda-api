@@ -28,6 +28,8 @@ model Products {
   units         Int
   price         Decimal @db.Decimal(10,2)
   salesDetails  salesDetail[]
+  category      Category @relation (fields: [categoryId], references: [id])
+  categoryId    Int
   urlImg        String
 }
 
@@ -48,5 +50,10 @@ model salesDetail{
   salesPrice   Decimal @db.Decimal(10,2)
   quantity     Int
   rowTotal     Decimal @db.Decimal(10,2)
+}
+model Category{
+  id     Int @id @default(autoincrement())
+  name   String @unique
+  products Products[]
 }
 

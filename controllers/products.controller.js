@@ -1,22 +1,31 @@
+import { url } from 'zod';
+import { createProductSchema, deleteProductSchema, getProductByIdSchema, updateProductSchema, getProductsByCategoryIdSchema } from '../schemas/products.schema.js';
 import { prismaClient } from '../utils/db.js';
 import bcrypt from 'bcryptjs';
 
-export const insertProduct = async (req, res) => {
-    const { name, price } = req.body;
+export const createProduct = async (req, res) => {
+    const result = createProductSchema.parse(req.body);
+    const { id, name, price, units, categoryId, urlImg } = result;
      try {
             // 1. Find name (Prisma uses findUnique for @unique fields)
-            const productFound = await prismaClient.products.findFirst({
+            const productFound = await prismaClient.Products.findFirst({
                 where: { name }
+            });
+            const categoryFound = await prismaClient.Category.findFirst({
+                where: { id: categoryId }
             });
             
             if (productFound) return res.status(400).json(["El nombre del producto ya esta en uso."]);
-    
+            if (!categoryFound) return res.status(404).json(["La categoria no fue encontrada."]);
+            
             // 2. Create product
-            const productSaved = await prismaClient.products.create({
+            const productSaved = await prismaClient.Products.create({
                 data: {
                     name,
                     price,
-                    units : 0
+                    units : 0,
+                    categoryId,
+                    urlImg
                 }
             });
 
@@ -24,7 +33,9 @@ export const insertProduct = async (req, res) => {
                 id: productSaved.id,
                 name: productSaved.name,
                 price: productSaved.price,
-                units : 0
+                units : 0,
+                categoryId: productSaved.categoryId,
+                urlImg: productSaved.urlImg
             });
         } catch (error) {
             console.log(error);
@@ -33,17 +44,18 @@ export const insertProduct = async (req, res) => {
 }
 
 export const deleteProduct = async (req, res) =>{
-     const { id } = req.body;
+     const result = deleteProductSchema.parse(req.body);
+     const { id } = result;
      try {
             // 1. Find id (Prisma uses findUnique for @unique fields)
-            const productFound = await prismaClient.products.findUnique({
+            const productFound = await prismaClient.Products.findUnique({
                 where: { id }
             });
             
             if (!productFound) return res.status(404).json(["El producto no fue encontrado."]);
     
             // 2. Delete product
-            const productDeleted = await prismaClient.products.delete({
+            const productDeleted = await prismaClient.Products.delete({
                 where: { id }
             });
             
@@ -58,43 +70,60 @@ export const deleteProduct = async (req, res) =>{
         }
 }
 
-export const updateProduct = async (req, res) =>{
-     const {  id,name, price,units } = req.body;
-     try {
-            // 1. Find id (Prisma uses findUnique for @unique fields)
-            const productFound = await prismaClient.products.findUnique({
-                where: { id }
-            });
-            
-            if (!productFound) return res.status(404).json(["El producto no fue encontrado."]);
-    
-            // 2. Update product
-            const productUpdated = await prismaClient.products.update({
-                where: { id },
-                data: {
-                    name,
-                    price,
-                    units
-                }
-            });
-            
-            res.json({
-                id: productUpdated.id,
-                name: productUpdated.name,
-                price: productUpdated.price,
-                units: productUpdated.units
-            });
+export const updateProduct = async (req, res) => {
+  const result = updateProductSchema.parse(req.body);
+  const { id, name, price, units, categoryId, urlImg } = result;
 
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({ message: 'Error al actualizar el producto' });
-        }
-}
+  try {
+    const productFound = await prismaClient.Products.findUnique({
+      where: { id }
+    });
 
-export const listProduct = async (req, res) =>{ 
+    if (!productFound) {
+      return res.status(404).json(["El producto no fue encontrado."]);
+    }
+
+    if (categoryId !== undefined) {
+      const categoryFound = await prismaClient.Category.findUnique({
+        where: { id: categoryId }
+      });
+
+      if (!categoryFound) {
+        return res.status(404).json(["La categoria no fue encontrada."]);
+      }
+    }
+
+    const dataToUpdate = {};
+
+    if (name !== undefined) dataToUpdate.name = name;
+    if (price !== undefined) dataToUpdate.price = price;
+    if (units !== undefined) dataToUpdate.units = units;
+    if (categoryId !== undefined) dataToUpdate.categoryId = categoryId;
+    if (urlImg !== undefined) dataToUpdate.urlImg = urlImg;
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return res.status(400).json({
+        message: "Debes enviar al menos un campo para actualizar"
+      });
+    }
+
+    const productUpdated = await prismaClient.Products.update({
+      where: { id },
+      data: dataToUpdate
+    });
+
+    res.json(productUpdated);
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Error al actualizar el producto' });
+  }
+};
+
+export const getProducts = async (req, res) =>{ 
     try {
             // 1. Find id (Prisma uses findMany for all records)
-            const products = await prismaClient.products.findMany();
+            const products = await prismaClient.Products.findMany();
 
             if (products.length === 0) return res.status(404).json(["No hay productos."]);
             
@@ -108,11 +137,12 @@ export const listProduct = async (req, res) =>{
         }
 }
 
-export const getProduct = async (req, res) =>{
-     const { id,name } = req.body;
+export const getProductById = async (req, res) =>{
+    const result = getProductByIdSchema.parse(req.body);
+    const { id, name} = result;
      try {
             // 1. Find id (Prisma uses findUnique for @unique fields)
-            const productFound = await prismaClient.products.findFirst({
+            const productFound = await prismaClient.Products.findFirst({
                 where: { 
                     OR: [
                         { id },
@@ -127,7 +157,9 @@ export const getProduct = async (req, res) =>{
                 id: productFound.id,
                 name: productFound.name,
                 price: productFound.price,
-                units: productFound.units
+                units: productFound.units,
+                categoryId: productFound.categoryId,
+                urlImg: productFound.urlImg
             });
 
         } catch (error) {
@@ -136,3 +168,42 @@ export const getProduct = async (req, res) =>{
         }
 }
 
+export const verifyProductUnits = async (req, res) => {
+   const { id,sellQuantity } = req.body;
+    try {
+        const productFound = await prismaClient.Products.findUnique({
+            where: { id: productId }
+        });
+        if (!productFound) return res.status(404).json(["El producto no fue encontrado."]);
+        
+        if (productFound.units < sellQuantity) return res.status(401).json(["No hay suficientes unidades del producto."]);
+        
+        res.json({})
+    
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Error al verificar las unidades del producto' });
+    }
+}
+
+export const getProductsByCategoryId = async (req, res) =>{
+    const result = getProductsByCategoryIdSchema.parse(req.body);
+    const { categoryId } = result;
+     try {
+            // 1. Find id (Prisma uses findUnique for @unique fields)
+            const products = await prismaClient.Products.findMany({
+                where: { 
+                    categoryId
+                }
+            });
+            
+            if (!products) return res.status(404).json(["No hay productos ."]);
+            
+            res.json({
+            products});
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({ message: 'Error al obtener productos' });
+        }
+}

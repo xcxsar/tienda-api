@@ -10,6 +10,7 @@ import { config } from 'dotenv';
 import authRoutes from './routes/auth.routes.js';
 import productRoutes from './routes/productos.routes.js';
 import ventasRoutes from './routes/ventas.routes.js';
+import categoriesRoutes from './routes/category.route.js';
 
 // Inicializar app
 const app = express();
@@ -38,6 +39,8 @@ app.use(cookieParser());
 // --- Definición de Rutas ---
 
 app.use("/api", authRoutes);
-
+app.use("/api", productRoutes);
+app.use("/api", ventasRoutes);
+app.use("/api", categoriesRoutes);
 
 export default app;

@@ -1,53 +1,70 @@
 import { prismaClient } from '../utils/db.js';
+import {createSalesSchema} from '../schemas/ventas.schema.js';
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken';
-import { use } from 'react';
 
-export const insertSales = async (req, res) => {
+export const createSales = async (req, res) => {
+    const result = createSalesSchema.parse(req.body);
+    const salesDetails = result; 
+    
+    try {
+        const userId = req.user.id;
 
-    const salesDetails = req.body;
-     try {
-            const userId = req.user.id; // Obtener el usuario autenticado
+        if (!userId) {
+            return res.status(401).json({ message: 'Usuario no autenticado' });
+        }
+        if (!salesDetails || salesDetails.length === 0) {
+            return res.status(400).json({ message: 'No se proporcionaron detalles de venta' });
+        }
+
+        const totalVenta = salesDetails.reduce((total, item) => total + (item.quantity * item.salesPrice), 0);
+
+        const resultado = await prismaClient.$transaction(async (tx) => {
             
-            if (!userId)
-                return res.status(401).json({ message: 'Usuario no autenticado' });
-
-            const savedVenta = await prismaClient.Sales.create({
+            const savedVenta = await tx.Sales.create({
                 data: {
                     date: new Date(),
                     salesmanId: userId,
-                    totalPrice : 0
+                    totalPrice: totalVenta
                 }
             });
 
-            salesDetails.forEach(async (sale) => {
-                const doSale = await prismaClient.salesDetail.create({
+            const detallesGuardados = [];
+            for (const item of salesDetails) {
+                const detail = await tx.salesDetail.create({
                     data: {
                         saleId: savedVenta.id,
-                        productId: sale.productId,
-                        quantity: sale.quantity,
-                        salesPrice: sale.price,
-                        rowTotal: sale.quantity * sale.price
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        salesPrice: item.salesPrice,
+                        rowTotal: item.quantity * item.salesPrice
                     }
                 });
-            });
+                detallesGuardados.push(detail);
+                
+                const product = await tx.Products.findUnique({
+                    where: { id: item.productId }
+                });
 
-            const   updatedTotalPrice = await prismaClient.Sales.aggregate({
-                data:{
-                    totalPrice: salesDetails.reduce((total, sale) => total + (sale.quantity * sale.salesPrice), 0)
-                },
-                where: { saleId: savedVenta.id }
-            }); 
+                if (!product || product.stock < item.quantity) {
+                throw new Error(`No hay suficiente stock para el producto ID ${item.productId}`);
+                }
 
-            res.json({
-                id: savedVenta.id,
-                date: savedVenta.date,
-                salesmanId: savedVenta.salesmanId,
-                totalPrice: savedVenta.totalPrice,
-                salesDetails: []
-            });
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({ message: 'Error al realizar la venta' });
-        }
+                await tx.Products.update({
+                    where: { id: item.productId },
+                    data: {
+                        units: { decrement: item.quantity }
+                    }
+                    });
+            }
+
+            return { ...savedVenta, details: detallesGuardados };
+        });
+
+        res.json(resultado);
+
+    } catch (error) {
+        console.error("Error en la transacción:", error);
+        return res.status(500).json({ message: 'Error al realizar la venta', error: error.message });
+    }
 }
