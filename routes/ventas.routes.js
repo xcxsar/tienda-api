@@ -1,15 +1,16 @@
 import { Router } from 'express';
 // Controller
-
+import {createSales} from '../controllers/ventas.controller.js';
 //Validation middlewares
 import { authRequired } from '../middlewares/validateToken.js';
 // Import validation schemas
 import { validateSchema } from "../middlewares/validator.middleware.js";
-import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
+import { createSalesSchema } from '../schemas/ventas.schema.js';
 import { isValid } from 'zod/v3';
 
 const router = Router();
 // Ventas routes
+router.post('/sales', authRequired, validateSchema(createSalesSchema), createSales);
 
 
 export default router;
