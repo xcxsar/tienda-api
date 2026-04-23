@@ -2,9 +2,13 @@ import path from 'path';
 import { prismaClient } from '../utils/db.js';
 import { fileURLToPath } from 'url';
 import puppeteer from 'puppeteer';
-import pkg from 'pdf-to-printer';
 import fs from 'fs/promises';
 import { printReceiptSchema } from '../schemas/print.schema.js';
+import os from 'os';
+import pkg from 'pdf-to-printer'; 
+import unixPrinter from 'unix-print'; 
+
+//El nombre de la impresora puede variar según el sistema y la configuración, asegúrate de usar el nombre correcto para tu entorno.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -154,9 +158,12 @@ const generateHTMLReceipt = async (venta, salesDetails) => {
 };
 
 const printPDF = async (ruta, impresora) => {
-    await pkg.print(ruta, {
-        printer: impresora
-    });
+    if (os.platform() === 'win32') {
+        await pkg.print(ruta, { printer: impresora });
+    } else {
+       
+        await unixPrinter.print(ruta, impresora);
+    }
 };
 
 export const printReceipt = async (req, res) => {
@@ -169,7 +176,11 @@ export const printReceipt = async (req, res) => {
 
         const html = await generateHTMLReceipt(venta, salesDetails);
 
-        browser = await puppeteer.launch({ headless: "new" });
+       browser = await puppeteer.launch({ 
+            headless: "new",
+            args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+        });
+
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
         filePath = path.join(__dirname, '../assets/PDFs', `recibo-${venta.id}-${Date.now()}.pdf`);
