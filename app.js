@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.routes.js';
 import productRoutes from './routes/productos.routes.js';
 import ventasRoutes from './routes/ventas.routes.js';
 import categoriesRoutes from './routes/category.route.js';
+import printRoutes from './routes/print.routes.js';
 
 // Inicializar app
 const app = express();
@@ -42,5 +43,6 @@ app.use("/api", authRoutes);
 app.use("/api", productRoutes);
 app.use("/api", ventasRoutes);
 app.use("/api", categoriesRoutes);
+app.use("/api", printRoutes);
 
 export default app;

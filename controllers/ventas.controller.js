@@ -25,7 +25,7 @@ export const createSales = async (req, res) => {
                 data: {
                     date: new Date(),
                     salesmanId: userId,
-                    totalPrice: totalVenta
+                    totalPrice: totalVenta*1.16 
                 }
             });
 
