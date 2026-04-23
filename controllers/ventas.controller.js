@@ -1,5 +1,5 @@
 import { prismaClient } from '../utils/db.js';
-import {createSalesSchema} from '../schemas/ventas.schema.js';
+import {createSalesSchema,getsaleDetailsBySaleIdSchema} from '../schemas/ventas.schema.js';
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken';
 
@@ -67,4 +67,42 @@ export const createSales = async (req, res) => {
         console.error("Error en la transacción:", error);
         return res.status(500).json({ message: 'Error al realizar la venta', error: error.message });
     }
+}
+export const getMostRecentSale = async (req, res) => { 
+        try {
+                const saleFound  = await prismaClient.Sales.findFirst({
+                    orderBy: { date: 'desc' }
+                });
+                
+                if (!saleFound) return res.status(404).json(["No se encontraron ventas."]);
+                
+                res.json({
+                    saleFound
+                });
+    
+            } catch (error) {
+                console.log(error);
+                return res.status(500).json({ message: 'Error al obtener la venta' });
+            }
+}
+export const getsaleDetailsBySaleId = async (req, res) => {
+        const result = getsaleDetailsBySaleIdSchema.parse(req.body);
+        const {id} = result;
+         try {
+                // 1. Find id (Prisma uses findUnique for @unique fields)
+                const {id: saleId} = await prismaClient.Sales.findUnique({
+                    where: { id }
+                }); 
+                
+                if (!saleId) return res.status(404).json(["No se encontraron detalles para esta venta."]);
+                
+                const salesDetailsFound = await prismaClient.salesDetail.findMany({
+                    where: { saleId }
+                });
+                res.json(salesDetailsFound);
+    
+            } catch (error) {
+                console.log(error);
+                return res.status(500).json({ message: 'Error al obtener los detalles de la venta' });
+            }
 }

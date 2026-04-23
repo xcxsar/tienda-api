@@ -3,10 +3,11 @@ import { prismaClient } from '../utils/db.js';
 import { fileURLToPath } from 'url';
 import puppeteer from 'puppeteer';
 import fs from 'fs/promises';
-import { printReceiptSchema } from '../schemas/print.schema.js';
 import os from 'os';
 import pkg from 'pdf-to-printer'; 
-import unixPrinter from 'unix-print'; 
+import unixPrinter from 'unix-print';
+import { getMostRecentSale, getsaleDetailsBySaleId } from './ventas.controller.js'; 
+import { error } from 'console';
 
 //El nombre de la impresora puede variar según el sistema y la configuración, asegúrate de usar el nombre correcto para tu entorno.
 
@@ -45,7 +46,7 @@ const generateProductsList = async (salesDetails) => {
     `).join('');
 };
 
-const generateHTMLReceipt = async (venta, salesDetails) => {
+const generateHTMLReceipt = async (sale, salesDetails) => {
     const filasProductos = await generateProductsList(salesDetails);
    
     return `
@@ -116,13 +117,13 @@ const generateHTMLReceipt = async (venta, salesDetails) => {
         </div>
 
         <div>
-            <strong>Folio:</strong> ${venta.id}<br>
-            <strong>Fecha:</strong> ${venta.date.toLocaleString()}<br>
-            <strong>Vendedor:</strong> ${venta.salesmanId}
+            <strong>Folio:</strong> ${sale.id}<br>
+            <strong>Fecha:</strong> ${sale.date.toLocaleString()}<br>
+            <strong>Vendedor:</strong> ${sale.salesmanId}
         </div>
         </div>
 
-        <div class="title">RECIBO DE VENTA</div>
+        <div class="title">RECIBO DE Venta</div>
 
         <div class="info">
         <strong>Cliente</strong> 
@@ -143,9 +144,9 @@ const generateHTMLReceipt = async (venta, salesDetails) => {
         </table>
 
         <div class="total">
-        SubTOTAL: $${venta.total/1.16} <br>
-        IVA: $${venta.total/1.16*0.16} <br>
-        TOTAL: $${venta.total}
+        SubTOTAL: $${sale.totalPrice/1.16} <br>
+        IVA: $${sale.totalPrice/1.16*0.16} <br>
+        TOTAL: $${sale.totalPrice}
         </div>
 
         <div class="footer">
@@ -171,10 +172,20 @@ export const printReceipt = async (req, res) => {
     let filePath;
 
     try {
-        const result = printReceiptSchema.parse(req.body);
-        const { venta, salesDetails } = result;
-
-        const html = await generateHTMLReceipt(venta, salesDetails);
+        const sale = await prismaClient.Sales.findFirst({
+            orderBy: { date: 'desc' }
+        });
+        if (!sale) {
+            return res.status(404).json({ message: 'No se encontraron ventas para imprimir.' });
+        } 
+        
+        const salesDetails = await prismaClient.salesDetail.findMany({
+            where: { saleId: sale.id }
+        });
+        if (!salesDetails) {
+            return res.status(404).json({ message: 'No se encontraron Detalles de ventas para imprimir.' });
+        }
+        const html = await generateHTMLReceipt(sale, salesDetails);
 
        browser = await puppeteer.launch({ 
             headless: "new",
@@ -183,7 +194,7 @@ export const printReceipt = async (req, res) => {
 
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
-        filePath = path.join(__dirname, '../assets/PDFs', `recibo-${venta.id}-${Date.now()}.pdf`);
+        filePath = path.join(__dirname, '../assets/PDFs', `recibo-${sale.id}-${Date.now()}.pdf`);
 
         await page.pdf({
             path: filePath,
