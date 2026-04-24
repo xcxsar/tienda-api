@@ -7,7 +7,7 @@ export const createSales = async (req, res) => {
     const result = createSalesSchema.parse(req.body);
     const salesDetails = result; 
     
-    try {
+    try {    
         const userId = req.user.id;
 
         if (!userId) {
@@ -46,7 +46,7 @@ export const createSales = async (req, res) => {
                     where: { id: item.productId }
                 });
 
-                if (!product || product.stock < item.quantity) {
+                if (!product || product.units < item.quantity) {
                 throw new Error(`No hay suficiente stock para el producto ID ${item.productId}`);
                 }
 
