@@ -1,17 +1,19 @@
 import jwt from 'jsonwebtoken';
+const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
-export const authRequired = (req,res,next) => {
-    const {token} = req.cookies;
+export const authRequired = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader) return res.status(401).json({ message: "No autorizado, falta token" });
 
-    if (!token) {
-        return res.status(401).json({ message: 'No autorizado' });
-    }
-    const secret = process.env.TOKEN_SECRET;
+    const token = authHeader.split(" ")[1]; 
 
-    jwt.verify(token, secret, (err, user) => {
-        if (err) return res.status(403).json({ message: 'Token invalido' });
+    if (!token) return res.status(401).json({ message: "Token no proporcionado" });
 
-        req.user = { id: user.id };
+    jwt.verify(token, TOKEN_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ message: "Token inválido" });
+        
+        req.user = user; 
         next();
     });
 };

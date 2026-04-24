@@ -10,7 +10,7 @@ import { isValid } from 'zod/v3';
 
 const router = Router();
 // Auth routes
-router.post('/login', validateSchema(loginSchema), login);
+router.post('/login',validateSchema(loginSchema), login);
 router.post('/register', validateSchema(registerSchema), register);
 router.post('/logout', logout);
 router.get('/verify',verifyToken);
