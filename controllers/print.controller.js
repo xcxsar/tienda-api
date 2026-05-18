@@ -183,7 +183,7 @@ export const printReceipt = async (req, res) => {
         await browser.close();
         browser = null; 
 
-        await printPDF(filePath, 'Microsoft Print to PDF');
+        await printPDF(filePath, 'HP-LaserJet-Professional-P-1102w');
 
         
         res.json({ message: 'Recibo generado e impreso correctamente' });

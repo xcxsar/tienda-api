@@ -1,6 +1,7 @@
 import { prismaClient } from '../utils/db.js';
-import {createSalesSchema} from '../schemas/ventas.schema.js';
-import bcrypt from 'bcryptjs'
+import { createSalesSchema } from '../schemas/ventas.schema.js';
+// bcrypt y jsonwebtoken no parecen usarse en este bloque, pero los mantenemos si los necesitas
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 export const createSales = async (req, res) => {
@@ -25,7 +26,7 @@ export const createSales = async (req, res) => {
                 data: {
                     date: new Date(),
                     salesmanId: userId,
-                    totalPrice: totalVenta*1.16 
+                    totalPrice: totalVenta * 1.16 // Aplicando IVA
                 }
             });
 
@@ -46,20 +47,34 @@ export const createSales = async (req, res) => {
                     where: { id: item.productId }
                 });
 
+                // NOTA: Asegúrate de que el campo en tu base de datos se llame 'stock' o 'units' de forma consistente. 
+                // Aquí validas contra 'product.stock' pero actualizas 'units'.
                 if (!product || product.stock < item.quantity) {
-                throw new Error(`No hay suficiente stock para el producto ID ${item.productId}`);
+                    throw new Error(`No hay suficiente stock para el producto ID ${item.productId}`);
                 }
 
                 await tx.Products.update({
                     where: { id: item.productId },
                     data: {
-                        units: { decrement: item.quantity }
+                        units: { decrement: item.quantity } // O 'stock: { decrement: item.quantity }'
                     }
-                    });
+                });
             }
 
             return { ...savedVenta, details: detallesGuardados };
         });
+
+        // =========================================================
+        // EMITIR EVENTO WEBSOCKET A TODOS LOS CLIENTES CONECTADOS
+        // =========================================================
+        const io = req.app.get('io'); // Recuperamos la instancia de Socket.io
+        if (io) {
+            // Avisamos a todos que se creó una venta para que refresquen su UI
+            io.emit('sale_created', { 
+                message: 'Nueva venta registrada', 
+                saleId: resultado.id 
+            });
+        }
 
         res.json(resultado);
 
