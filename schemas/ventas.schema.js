@@ -12,8 +12,10 @@ export const createSalesSchema =z.array(
       quantity: z.coerce
         .number({ required_error: 'La cantidad es obligatoria' })
         .positive('La cantidad debe ser un número positivo')
-    })
-  , {
-    required_error: 'Debe enviar productos en la venta'
-  })
-  .nonempty('Se debe proporcionar al menos un producto para la venta');
+    }));
+
+export const getsaleDetailsBySaleIdSchema = z.object({
+    id: z.coerce
+      .number({ required_error: 'El ID de la venta es obligatorio' })
+      .positive('El ID de la venta debe ser un número positivo')
+  });

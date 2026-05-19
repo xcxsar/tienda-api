@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import { createAccessToken } from '../libs/jwt.sign.js';
 import jwt from 'jsonwebtoken';
 
+const TOKEN_SECRET = process.env.TOKEN_SECRET;
+
 export const register = async (req, res) => {
     const { name, email, password } = req.body;
     try {
@@ -24,9 +26,16 @@ export const register = async (req, res) => {
             }
         });
 
-        const token = await createAccessToken({ id: userSaved.id });
-        res.cookie('token', token);
-       
+       const token = await createAccessToken({ id: userSaved.id });
+        
+       res.cookie('token', token, {
+            httpOnly: true, 
+            secure: false,  
+            sameSite: 'lax', 
+            path: '/',
+            maxAge: 24 * 60 * 60 * 1000     
+        });
+            
         res.json({
             id: userSaved.id,
             name: userSaved.name,
@@ -50,16 +59,18 @@ export const login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, userFound.password);
         if (!isMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
 
-        const token = await createAccessToken({ id: userFound.id });
-        res.cookie('token', token);
-       
-        res.json({
-            id: userFound.id,
-            name: userFound.name,
-            email: userFound.email,
-            createdAt: userFound.createdAt,
-            updatedAt: userFound.updatedAt
-        });
+    const token = await createAccessToken({ id: userFound.id });
+
+
+    res.json({
+        id: userFound.id,
+        name: userFound.name,
+        email: userFound.email,
+        token: token, 
+        createdAt: userFound.createdAt,
+        updatedAt: userFound.updatedAt
+    });
+    
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -67,7 +78,6 @@ export const login = async (req, res) => {
 
 export const profile = async (req, res) => {
     try {
-        // req.user.id usually comes from your auth middleware
         const userFound = await prismaClient.user.findUnique({
             where: { id: Number(req.user.id) } 
         });

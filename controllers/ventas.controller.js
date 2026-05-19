@@ -8,7 +8,7 @@ export const createSales = async (req, res) => {
     const result = createSalesSchema.parse(req.body);
     const salesDetails = result; 
     
-    try {
+    try {    
         const userId = req.user.id;
 
         if (!userId) {
