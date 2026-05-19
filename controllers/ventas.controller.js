@@ -1,6 +1,6 @@
 import { prismaClient } from '../utils/db.js';
-import { createSalesSchema } from '../schemas/ventas.schema.js';
-// bcrypt y jsonwebtoken no parecen usarse en este bloque, pero los mantenemos si los necesitas
+// CORRECCIÓN 1: Importamos 'getsaleDetailsBySaleIdSchema' que faltaba
+import { createSalesSchema, getsaleDetailsBySaleIdSchema } from '../schemas/ventas.schema.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -8,7 +8,7 @@ export const createSales = async (req, res) => {
     const result = createSalesSchema.parse(req.body);
     const salesDetails = result; 
     
-    try {    
+    try {
         const userId = req.user.id;
 
         if (!userId) {
@@ -47,8 +47,6 @@ export const createSales = async (req, res) => {
                     where: { id: item.productId }
                 });
 
-                // NOTA: Asegúrate de que el campo en tu base de datos se llame 'stock' o 'units' de forma consistente. 
-                // Aquí validas contra 'product.stock' pero actualizas 'units'.
                 if (!product || product.stock < item.quantity) {
                     throw new Error(`No hay suficiente stock para el producto ID ${item.productId}`);
                 }
@@ -56,7 +54,7 @@ export const createSales = async (req, res) => {
                 await tx.Products.update({
                     where: { id: item.productId },
                     data: {
-                        units: { decrement: item.quantity } // O 'stock: { decrement: item.quantity }'
+                        units: { decrement: item.quantity } 
                     }
                 });
             }
@@ -81,5 +79,45 @@ export const createSales = async (req, res) => {
     } catch (error) {
         console.error("Error en la transacción:", error);
         return res.status(500).json({ message: 'Error al realizar la venta', error: error.message });
+    }
+}; // CORRECCIÓN 2: Faltaba esta llave y punto y coma para cerrar la función createSales
+
+export const getMostRecentSale = async (req, res) => { 
+    try {
+        const saleFound  = await prismaClient.Sales.findFirst({
+            orderBy: { date: 'desc' }
+        });
+        
+        if (!saleFound) return res.status(404).json(["No se encontraron ventas."]);
+        
+        res.json({
+            saleFound
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Error al obtener la venta' });
+    }
+}
+
+export const getsaleDetailsBySaleId = async (req, res) => {
+    const result = getsaleDetailsBySaleIdSchema.parse(req.body);
+    const {id} = result;
+    try {
+        // 1. Find id (Prisma uses findUnique for @unique fields)
+        const {id: saleId} = await prismaClient.Sales.findUnique({
+            where: { id }
+        }); 
+        
+        if (!saleId) return res.status(404).json(["No se encontraron detalles para esta venta."]);
+        
+        const salesDetailsFound = await prismaClient.salesDetail.findMany({
+            where: { saleId }
+        });
+        res.json(salesDetailsFound);
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Error al obtener los detalles de la venta' });
     }
 }

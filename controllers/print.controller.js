@@ -144,10 +144,10 @@ const generateHTMLReceipt = async (sale, salesDetails) => {
         </table>
 
         <div class="total">
-        SubTOTAL: $${sale.totalPrice/1.16} <br>
-        IVA: $${sale.totalPrice/1.16*0.16} <br>
-        TOTAL: $${sale.totalPrice}
-        </div>
+    SubTOTAL: $${(sale.totalPrice / 1.16).toFixed(2)} <br>
+    IVA: $${(sale.totalPrice / 1.16 * 0.16).toFixed(2)} <br>
+    TOTAL: $${sale.totalPrice.toFixed(2)}
+</div>
 
         <div class="footer">
         Gracias por su compra
@@ -188,7 +188,7 @@ export const printReceipt = async (req, res) => {
         const html = await generateHTMLReceipt(sale, salesDetails);
 
        browser = await puppeteer.launch({ 
-            headless: "new",
+            executablePath: '/usr/bin/chromium',
             args: ['--no-sandbox', '--disable-setuid-sandbox'] 
         });
 

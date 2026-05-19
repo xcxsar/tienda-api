@@ -25,70 +25,70 @@ async function main() {
       name: "Mayonesa 600gr",
       price: 17.80,
       categoryId: 2,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/mayonesa.jpg",
+      urlImg: "mayonesa.jpg",
       units: 10
     },
     {
       name: "Leche Entera 1L",
       price: 24.50,
       categoryId: 3,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/leche.jpg",
+      urlImg: "leche.jpg",
       units: 10
     },
     {
       name: "Chikawa Figurita",
       price: 32.00,
       categoryId: 1,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/chikawaFigura.jpg",
+      urlImg: "chikawaFigura.jpg",
       units: 10
     },
     {
       name: "Imagen De PlayStation5",
       price: 8900.00,
       categoryId: 1,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/impresionPlay5.jpg",
+      urlImg: "impresionPlay5.jpg",
       units: 10
     },
     {
       name: "Yogurt de Fresa 1kg",
       price: 42.10,
       categoryId: 3,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/yogurthFresa.jpg",
+      urlImg: "yogurthFresa.jpg",
       units: 10
     },
     {
       name: "Aceite Vegetal 900ml",
       price: 45.00,
       categoryId: 2,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/aceiteVegetal.jpg",
+      urlImg: "aceiteVegetal.jpg",
       units: 10
     },
     {
       name: "Espanta Mayates",
       price: 28.50,
       categoryId: 1,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/espantaMayates.jpg",
+      urlImg: "espantaMayates.jpg",
       units: 10
     },
     {
       name: "Pasta de Dientes 100ml",
       price: 35.00,
       categoryId: 4,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/pastaDeDientes.jpg",
+      urlImg: "pastaDeDientes.jpg",
       units: 10
     },
     {
       name: "Figura Travis Scott",
       price: 12.50,
       categoryId: 1,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/travisScott.jpg",
+      urlImg: "travisScott.jpg",
       units: 10
     },
     {
       name: "Leshe Shabo",
       price: 19.00,
       categoryId: 3,
-      urlImg: "C:/Users/Theki/Desktop/6toSemestre/Redes de Computadoras/Unidad3/ProyectoTiendita/tiendaAPI/assets/images/lesheShabo.jpg",
+      urlImg: "lesheShabo.jpg",
       units: 10
     }
   ];
